@@ -13,7 +13,7 @@ ejercicio de aplicación de principios y patrones de diseño (**SOLID, GRASP, MV
 |---|---|---|
 | Abdo Ferez, Federico | 1194765 | fabdoferez@uade.edu.ar |
 
-**Equipo de desarrollo:** Abdo, Federico — entrega individual (1 integrante).
+**Equipo de desarrollo:** Abdo Ferez, Federico — entrega individual (1 integrante).
 
 ---
 
