@@ -1,0 +1,10 @@
+# Normaliza los finales de linea: LF en el repo, nativo en el working copy.
+* text=auto eol=lf
+
+*.bat text eol=crlf
+mvnw.cmd text eol=crlf
+
+*.png binary
+*.wav binary
+*.pdf binary
+*.jar binary

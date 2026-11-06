@@ -1,0 +1,11 @@
+nombre: Primeros pasos
+tiempo: 120
+objetivo: 300
+---
+########
+#      #
+# $  . #
+#  @   #
+# $  . #
+#      #
+########

@@ -1,0 +1,7 @@
+nombre: Nivel de prueba
+tiempo: 90
+objetivo: 500
+---
+######
+#@$ .#
+######
