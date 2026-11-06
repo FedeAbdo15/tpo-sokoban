@@ -1,11 +1,17 @@
-# Prompt para generar el Diagrama de Clases (StarUML)
+# Prompt para generar el Diagrama de Clases (Mermaid)
 
 > **Este prompt describe el código tal como quedó**, no un diseño previsto.
 > Se armó leyendo la API pública real de las 89 clases de `src/main/java`.
 > Si el código cambia, hay que regenerarlo.
 >
-> Uso sugerido: pegarlo en una herramienta que genere PlantUML, importar el `.puml`
-> resultante a StarUML, y acomodar a mano la disposición de las cajas.
+> Uso sugerido: pegarlo en cualquier LLM para que devuelva el código **Mermaid**.
+> GitHub renderiza Mermaid de forma nativa, así que los bloques se pueden pegar tal
+> cual en el README o en el informe y se ven como diagrama, sin subir imágenes.
+>
+> ⚠️ **Ojo con el entregable:** la consigna pide el diagrama **en StarUML**. Mermaid no
+> se importa directo a StarUML. Sirve para versionar el diagrama junto al código y
+> revisarlo rápido en el navegador, pero el archivo `.mdj` que se entrega hay que
+> armarlo igual en StarUML, usando estos diagramas como guía.
 >
 > **Verificar siempre lo que salga contra el código.** La consigna exige poder defender
 > cada decisión, y un diagrama que no coincide con el código es peor que no tenerlo.
@@ -15,25 +21,64 @@
 ## PROMPT
 
 ````
-Generá un diagrama de clases UML en PlantUML para un juego Sokoban en Java 21 + Swing,
+Generá un diagrama de clases UML en Mermaid para un juego Sokoban en Java 21 + Swing,
 desarrollado como trabajo integrador de Proceso de Desarrollo de Software. El diagrama
 va en español, agrupado por paquetes, y tiene que hacer explícitos los patrones de
 diseño aplicados.
 
-FORMATO DE SALIDA
-- PlantUML (`@startuml` / `@enduml`), importable a StarUML.
-- Agrupar con `package` usando los nombres de paquete reales.
-- Marcar interfaces con <<interface>>, clases abstractas con `abstract`, enumerados
-  con <<enumeration>> y records con <<record>>.
-- Mostrar los miembros públicos relevantes con su visibilidad (+ - #). Omitir getters
-  y setters triviales; sí incluir los métodos que expresan comportamiento.
-- Anotar con `note` cada grupo de clases que materializa un patrón, diciendo el patrón
-  y el rol de cada clase.
-- Usar las flechas correctas con multiplicidades: herencia (<|--), realización (<|..),
-  composición (*--), agregación (o--), asociación (-->) y dependencia (..>).
-- Para que sea legible, dividir en cuatro vistas separadas con `newpage`:
-  (1) tablero y baldosas, (2) ciclo de juego y estados, (3) historial y carga de
-  niveles, (4) vista, controlador y servicios.
+FORMATO DE SALIDA — Mermaid `classDiagram`
+
+- Devolvé **código Mermaid**, no PlantUML. Cada diagrama en su propio bloque
+  ```mermaid ... ``` para que GitHub lo renderice.
+- Son **cuatro diagramas separados** (Mermaid no tiene `newpage`), cada uno en su
+  propio bloque y con un título en Markdown arriba:
+    1. Tablero y baldosas  — `model.board`, `model.tile`, `model.tile.effect`,
+       `model.tile.mechanism`, `model.box`
+    2. Ciclo de juego      — `model.game`, `.state`, `.event`, `.loss`, `.score`
+    3. Historial y carga   — `model.history`, `factory`, `port`, `exception`
+    4. Vista y servicios   — `view`, `controller`, `service`, `Main`
+  Las clases que se repiten entre diagramas (por ejemplo `Level`, `Board` o `Game`)
+  se vuelven a declarar vacías, solo como punto de anclaje de las flechas.
+- Empezá cada bloque con `classDiagram` y `direction TB`.
+
+REGLAS DE SINTAXIS MERMAID QUE HAY QUE RESPETAR
+
+- ⛔ **Las relaciones van FUERA de los bloques `namespace`, nunca adentro.** Declarar
+  una flecha dentro de un `namespace` es un error de parseo y el diagrama no se
+  dibuja. Es el error más fácil de cometer. Primero todos los `namespace` con sus
+  clases, y recién después todas las flechas y las notas.
+- **Agrupar por paquete** con `namespace nombre.del.paquete { ... }`.
+- **Genéricos con virgulilla**: `List~Cell~`, `Map~SpriteKey, BufferedImage~`,
+  `IntFunction~Level~`, `Deque~LevelMemento~`. Es la notación propia de Mermaid;
+  con `<` y `>` el texto queda a merced del renderizador de HTML.
+- **Miembros**: `+metodo(Tipo param) TipoRetorno` y `-campo : Tipo`. El tipo de retorno
+  va **al final y sin dos puntos**.
+- **Estático**: sufijo `$` → `+of(Board board) LevelMemento$`
+- **Abstracto**: sufijo `*` → `+getType() BoxType*`
+- **Estereotipos**: dentro del cuerpo de la clase, en su propia línea:
+  `class Occupant { <<interface>> ... }`. Para enums usar `<<enumeration>>`, para
+  records `<<record>>` y para clases abstractas `<<abstract>>`.
+  Los valores de un enum se listan como miembros sueltos, sin paréntesis.
+- **Flechas** (iguales que en UML clásico):
+  herencia `<|--`, realización `<|..`, composición `*--`, agregación `o--`,
+  asociación `-->`, dependencia `..>`
+- **Multiplicidades entre comillas** a los costados de la flecha:
+  `Board "1" *-- "1..*" Cell`
+- **Etiqueta de la relación** después de dos puntos: `Tile --> EntryEffect : getEntryEffect()`
+- **Notas**: `note for NombreDeClase "texto"`, declaradas al final junto con las flechas.
+- No usar comillas dobles dentro de los nombres de clase ni de los miembros.
+
+CONTENIDO
+- Mostrar los miembros públicos relevantes. Omitir getters y setters triviales; sí
+  incluir los métodos que expresan comportamiento.
+- Poner una `note for ...` en cada clase que encabeza un patrón, diciendo el patrón y
+  el rol (por ejemplo: `note for EntryEffect "Strategy: cada baldosa decide que le pasa
+  a quien entra"`).
+- ⚠️ El inventario de clases que sigue está escrito en **notación Java**
+  (`List<Cell>`, `Map<K, V>`, `{static}`, `{abstract}`, `<<final>>`, `metodo(): Tipo`).
+  Hay que **traducirlo** a la sintaxis Mermaid descrita arriba: genéricos con `~`,
+  tipo de retorno al final sin dos puntos, `$` para estático y `*` para abstracto.
+  `<<final>>` no tiene equivalente en Mermaid: dejalo como nota si aporta.
 
 ================================================================ PAQUETES Y CLASES
 
@@ -350,13 +395,13 @@ InvalidLevelException extends Exception : line: int
 ========================================================= RELACIONES QUE DEBEN APARECER
 
 Game *-- "1" Level              Game o-- "1" GameState        Game o-- "0..*" GameListener
-Game --> IntFunction<Level>
+Game --> IntFunction~Level~
 Level *-- Board                 Level *-- LevelStats          Level *-- UndoHistory
 Level *-- VisibilityMap         Level o-- "5" LossCondition   Level o-- "0..*" GameListener
 Level ..> LevelMemento (crea)
 UndoHistory *-- "0..15" LevelMemento
 LevelMemento *-- "0..*" BoxSnapshot
-Board *-- "filas*columnas" Cell
+Board "1" *-- "1..*" Cell
 Cell o-- "1" Tile               Cell o-- "0..1" Occupant
 Board ..> MoveReport            Board ..> PushReport
 Tile <|-- Floor, Wall, Empty, Ice, Portal, StoragePoint, Door, KeyTile
@@ -399,6 +444,168 @@ Mostrá también, como nota sobre StoragePoint, que una caja guardada deja de se
 ocupante de la Cell y pasa a estar dentro del StoragePoint: eso es lo que permite que
 el jugador camine por encima de ella y que isComplete() sea polimórfico.
 ````
+
+---
+
+## Ejemplo validado de salida
+
+Este es el **diagrama 1** (tablero y baldosas) escrito a mano siguiendo las reglas de
+arriba. **Parsea sin errores con Mermaid 12.3.0**, así que sirve de referencia de la
+forma que tiene que tener la salida y de banco de pruebas si algo no renderiza.
+
+Está recortado a propósito (no están todas las baldosas ni todas las cajas): es un
+ejemplo de formato, no el diagrama completo.
+
+```mermaid
+classDiagram
+    direction TB
+
+    namespace model.board {
+        class Position {
+            <<record>>
+            +row : int
+            +col : int
+            +move(Direction direction) Position
+        }
+        class Direction {
+            <<enumeration>>
+            UP
+            DOWN
+            LEFT
+            RIGHT
+        }
+        class Cell {
+            -position : Position
+            -tile : Tile
+            -occupant : Occupant
+            +setTile(Tile tile) void
+            +isFree() boolean
+            +place(Occupant o) void
+            +remove() Occupant
+        }
+        class Board {
+            -cells : Cell[][]
+            -playerPosition : Position
+            +admits(Position p, Occupant occupant) boolean
+            +getBoxAt(Position position) Box
+            +getCells() List~Cell~
+            +isComplete() boolean
+            +movePlayer(Direction direction) MoveReport
+            -pushBox(Position from, Direction d) PushReport
+        }
+        class MoveReport {
+            <<record>>
+            +result : MoveResult
+            +pushed : boolean
+            +outcome : LandingOutcome
+            +boxLanding : Position
+            +blocked() MoveReport$
+        }
+    }
+
+    namespace model.tile {
+        class Tile {
+            <<abstract>>
+            +allowsPlayer() boolean
+            +allowsBox(Box box) boolean
+            +getEntryEffect() EntryEffect
+            +receiveBox(Box box) LandingOutcome
+            +isPendingStorage() boolean
+            +getStoredBox() Box
+            +isTransparent() boolean
+            +getLinkedPosition() Position
+        }
+        class StoragePoint {
+            -type : BoxType
+            -storedBox : Box
+            +receive(Box box) StorageResult
+            +isFilled() boolean
+        }
+        class Portal {
+            -letter : char
+            +linkTo(Position exit) void
+        }
+        class Ice
+        class Wall
+    }
+
+    namespace model.tile.effect {
+        class EntryEffect {
+            <<interface>>
+            +resolve(Board b, Occupant o, Position landing, Direction d) Position
+        }
+        class NoEffect
+        class SlideEffect
+        class TeleportEffect {
+            -exit : Position
+        }
+    }
+
+    namespace model.box {
+        class Occupant {
+            <<interface>>
+            +isPushable() boolean
+            +canEnter(Tile tile) boolean
+        }
+        class Box {
+            <<abstract>>
+            +getType() BoxType*
+            +push() PushResult
+            #onPushed() PushResult
+            +storeAt(StoragePoint point) StorageResult
+            #onStored(StoragePoint point) StorageResult
+            +opensDoors() boolean
+        }
+        class WeakBox {
+            -remainingPushes : int
+        }
+        class Player {
+            -facing : Direction
+        }
+    }
+
+    Board "1" *-- "1..*" Cell
+    Cell o-- "1" Tile
+    Cell o-- "0..1" Occupant
+    Board ..> MoveReport : crea
+    Tile <|-- StoragePoint
+    Tile <|-- Portal
+    Tile <|-- Ice
+    Tile <|-- Wall
+    Tile --> EntryEffect : getEntryEffect()
+    EntryEffect <|.. NoEffect
+    EntryEffect <|.. SlideEffect
+    EntryEffect <|.. TeleportEffect
+    EntryEffect ..> Board : admits()
+    Occupant <|.. Player
+    Occupant <|.. Box
+    Box <|-- WeakBox
+    StoragePoint o-- "0..1" Box : la caja guardada
+    Box ..> StoragePoint : storeAt()
+
+    note for EntryEffect "Strategy: cada baldosa decide que le pasa a quien entra"
+    note for Box "Template Method: push() y storeAt() son finales y llaman a los hooks"
+    note for Occupant "Double dispatch: el ocupante le pregunta a la baldosa"
+    note for StoragePoint "Al guardar, la caja sale de la Cell y queda dentro del destino"
+```
+
+### Cómo validar el Mermaid que genere el modelo
+
+GitHub renderiza estos bloques solo. Si uno no aparece, es un error de sintaxis, y lo
+más rápido es pegarlo en <https://mermaid.live> para que marque la línea.
+
+Lo que se verificó contra el parser de Mermaid 12.3.0 al armar estas reglas:
+
+| Construcción | Resultado |
+|---|---|
+| `namespace` con clases adentro | ✅ válido |
+| **Una flecha declarada dentro de un `namespace`** | ⛔ **error de parseo** |
+| Genéricos `List~Cell~` | ✅ válido |
+| `$` para estático, `*` para abstracto | ✅ válido |
+| `<<record>>`, `<<enumeration>>`, `<<abstract>>`, `<<interface>>` | ✅ válido |
+| Multiplicidades `"1" *-- "1..*"` | ✅ válido |
+| Etiqueta de relación con `: texto` | ✅ válido |
+| `note for Clase "texto"` | ✅ válido |
 
 ---
 

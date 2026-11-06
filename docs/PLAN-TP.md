@@ -697,7 +697,7 @@ Cada `Clip` se precarga una vez (mismo criterio Flyweight que los sprites). WAV 
 
 # 7. Prompt para generar el Diagrama de Clases
 
-➡️ **El prompt vive en [`docs/prompt-diagrama-clases.md`](prompt-diagrama-clases.md).**
+➡️ **El prompt vive en [`docs/prompt-diagrama-clases.md`](prompt-diagrama-clases.md)**, y genera **Mermaid** (GitHub lo renderiza nativamente).
 
 Se regeneró leyendo la API pública real de las 89 clases de `src/main/java`, porque el
 prompt original de esta sección describía el diseño *previsto* y el código terminó
