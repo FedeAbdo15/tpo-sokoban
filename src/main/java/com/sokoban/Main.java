@@ -68,11 +68,12 @@ public final class Main {
         input.bind(window.getRoot(), "R", game::restart);
         input.bind(window.getRoot(), "ESCAPE", () -> {
             clock.stop();
+            window.getMenuView().showProgress(progress.load().getLastUnlockedLevel(), LEVEL_COUNT);
             window.show(Screen.MENU);
         });
 
         wireMenu(window, game, progress, clock);
-        wireSummary(window, game);
+        wireSummary(window, game, progress, clock);
 
         window.getMenuView().showProgress(progress.load().getLastUnlockedLevel(), LEVEL_COUNT);
         window.setMinimumSize(new java.awt.Dimension(860, 420));
@@ -96,17 +97,22 @@ public final class Main {
         window.getMenuView().getExitButton().addActionListener(event -> System.exit(0));
     }
 
-    private static void wireSummary(GameWindow window, Game game) {
+    private static void wireSummary(GameWindow window, Game game, ProgressRepository progress, GameClock clock) {
         window.getSummaryView().getNextButton().addActionListener(event -> {
+            if (game.getState() instanceof GameCompletedState) {
+                clock.stop();
+                window.getMenuView().showProgress(progress.load().getLastUnlockedLevel(), LEVEL_COUNT);
+                window.show(Screen.MENU);
+                return;
+            }
             if (game.getCurrentLevel().getLossReason() != null) {
                 game.restart();          // nivel perdido: se reintenta el mismo
-            } else {
-                game.nextLevel();
+                window.showLevel();
+                return;
             }
+            game.nextLevel();
             if (game.getState() instanceof GameCompletedState) {
                 window.showGameCompleted();
-                window.getSummaryView().getNextButton().addActionListener(back ->
-                        window.show(Screen.MENU));
                 return;
             }
             window.showLevel();
