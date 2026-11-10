@@ -1,0 +1,161 @@
+classDiagram
+direction TB
+
+namespace com.sokoban.model.history {
+    class Command {
+        <<interface>>
+        +execute()
+    }
+    class MoveCommand {
+        -game : Game
+        -direction : Direction
+        +execute()
+    }
+    class LevelMemento {
+        -playerPosition : Position
+        -playerFacing : Direction
+        -cells : List~CellSnapshot~
+        -doors : List~DoorSnapshot~
+        -storages : List~StorageSnapshot~
+        -boxes : List~BoxSnapshot~
+        +of(Board board) LevelMemento$
+        +restoreInto(Board board)
+    }
+    class BoxSnapshot {
+        <<record>>
+        -box : Box
+        -remainingPushes : int
+        -doorOpened : boolean
+        +of(Box box) BoxSnapshot$
+        +restore()
+    }
+    class UndoHistory {
+        +STEPS_PER_UNDO : int$
+        +MAX_CONSECUTIVE_UNDOS : int$
+        +CAPACITY : int$
+        -mementos : Deque~LevelMemento~
+        -remainingUndos : int
+        +record(LevelMemento memento)
+        +canUndo() boolean
+        +undo() LevelMemento
+        +clear()
+    }
+}
+
+namespace com.sokoban.factory {
+    class CellCreator {
+        <<interface>>
+        +create(Position p, char symbol) CellContent
+    }
+    class WallCreator
+    class DoorCreator
+    class KeyTileCreator
+    class PortalCreator
+    class WeakBoxCreator
+    class CellContent {
+        <<record>>
+        -tile : Tile
+        -occupant : Occupant
+    }
+    class LevelBuilder {
+        -contents : Map~Position, CellContent~
+        -rows : int
+        -cols : int
+        -mapStartLine : int
+        +withHeader(String name, int timeLimit, int targetScore) LevelBuilder
+        +withMapStartLine(int line) LevelBuilder
+        +addCell(Position p, CellContent content) LevelBuilder
+        +build() Level
+        -linkPortals()
+        -wireDoorGroups()
+        -validate()
+    }
+    class LevelLoader {
+        -creators : Map~Character, CellCreator~
+        +load(String path) Level
+        +parse(String text) Level
+    }
+}
+
+namespace com.sokoban.port {
+    class ProgressRepository {
+        <<interface>>
+        +save(Progress progress)
+        +load() Progress
+    }
+    class Progress {
+        -lastUnlockedLevel : int
+    }
+}
+
+namespace com.sokoban.exception {
+    class InvalidLevelException {
+        -line : int
+    }
+}
+
+namespace java.lang {
+    class Exception
+}
+
+namespace com.sokoban.model.game {
+    class Game
+    class Level
+}
+
+namespace com.sokoban.model.board {
+    class Board
+}
+
+namespace com.sokoban.model.box {
+    class Box
+    class Occupant
+}
+
+namespace com.sokoban.model.tile {
+    class Tile
+    class Portal
+}
+
+namespace com.sokoban.model.tile.mechanism {
+    class DoorGroup
+}
+
+Command <|.. MoveCommand
+MoveCommand --> Game : move
+
+Level ..> LevelMemento : crea y restaura
+Level "1" *-- "1" UndoHistory
+UndoHistory "1" *-- "0..15" LevelMemento
+LevelMemento "1" *-- "0..*" BoxSnapshot
+LevelMemento ..> Board : of / restoreInto
+BoxSnapshot --> Box
+
+CellCreator <|.. WallCreator
+CellCreator <|.. DoorCreator
+CellCreator <|.. KeyTileCreator
+CellCreator <|.. PortalCreator
+CellCreator <|.. WeakBoxCreator
+CellCreator ..> CellContent : crea
+CellContent --> Tile
+CellContent --> Occupant
+
+LevelLoader "1" o-- "1..*" CellCreator
+LevelLoader ..> LevelBuilder : dirige
+LevelBuilder "1" o-- "0..*" CellContent
+LevelBuilder ..> Level : crea
+LevelBuilder ..> DoorGroup : crea y suscribe
+LevelBuilder ..> Portal : aparea
+LevelBuilder ..> InvalidLevelException : lanza
+LevelLoader ..> InvalidLevelException : lanza
+
+ProgressRepository ..> Progress
+Exception <|-- InvalidLevelException
+
+note for Command "Command: MoveCommand lo arma el InputController y encapsula game.move(direction)"
+note for LevelMemento "Memento (clase final). CellSnapshot, DoorSnapshot y StorageSnapshot son records privados anidados. Los contadores de LevelStats NO se guardan a proposito, y el undo NO invierte comandos: restaura una foto del tablero"
+note for UndoHistory "Caretaker: una foto cada 5 pasos, hasta 3 undos consecutivos, capacidad 15. Level es el Originator"
+note for CellCreator "Factory Method: cada creador concreto fabrica la baldosa y el ocupante de un simbolo del mapa"
+note for LevelBuilder "Builder: build valida un solo Sokoban, cajas vs destinos por tipo, cerrojo con su muro, portales pareados y borde cerrado; lanza InvalidLevelException"
+note for LevelLoader "Director del Builder: recorre el texto y delega cada simbolo en su CellCreator"
+note for ProgressRepository "Puerto (DIP): el modelo define la interfaz; la implementacion vive en service"

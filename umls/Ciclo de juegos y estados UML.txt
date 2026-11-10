@@ -1,0 +1,206 @@
+classDiagram
+direction TB
+
+namespace com.sokoban.model.game {
+    class Game {
+        -levelFactory : IntFunction~Level~
+        -levelCount : int
+        -state : GameState
+        -currentLevel : Level
+        -currentLevelNumber : int
+        -levelListeners : List~GameListener~
+        +start()
+        +move(Direction d)
+        +undo()
+        +restart()
+        +nextLevel()
+        +isInputBlocked() boolean
+        +getState() GameState
+        +addLevelListener(GameListener l)
+        +applyMove(Direction d)
+        +applyUndo() boolean
+        +hasNextLevel() boolean
+        +loadLevel(int number)
+    }
+    class Level {
+        -name : String
+        -timeLimitSeconds : int
+        -targetScore : int
+        -board : Board
+        -stats : LevelStats
+        -history : UndoHistory
+        -visibilityMap : VisibilityMap
+        -listeners : List~GameListener~
+        -LOSS_CONDITIONS : List~LossCondition~$
+        -lossReason : LossReason
+        -lastOutcome : LandingOutcome
+        -lastPushedBoxPosition : Position
+        -brokenBox : boolean
+        -elapsedSeconds : int
+        -openedDoors : int
+        +move(Direction d) MoveResult
+        +undo() boolean
+        +getRemainingUndos() int
+        +isWon() boolean
+        +getLossReason() LossReason
+        +elapseSeconds(int seconds)
+        +getRemainingSeconds() int
+        +addListener(GameListener l)
+        +hasBrokenBox() boolean
+        +getLastOutcome() LandingOutcome
+        +getLastPushedBoxPosition() Position
+        -evaluateLoss()
+        -publish(GameEvent event)
+    }
+    class LevelStats {
+        -moves : int
+        -pushes : int
+        -undos : int
+        +addMove()
+        +addPush()
+        +addUndo()
+    }
+}
+
+namespace java.util.function {
+    class IntFunction~Level~ {
+        <<interface>>
+        +apply(int value) Level
+    }
+}
+
+namespace com.sokoban.model.game.state {
+    class GameState {
+        <<interface>>
+        +acceptsInput() boolean
+        +onMove(Game game, Direction d) GameState
+        +onUndo(Game game) GameState
+        +onNextLevel(Game game) GameState
+    }
+    class MenuState {
+        +acceptsInput() boolean
+    }
+    class PlayingState {
+        +acceptsInput() boolean
+        +onMove(Game game, Direction d) GameState
+        +onUndo(Game game) GameState
+    }
+    class BlockedState {
+        +onUndo(Game game) GameState
+    }
+    class LostState {
+        +onUndo(Game game) GameState
+    }
+    class WonState {
+        +onNextLevel(Game game) GameState
+    }
+    class GameCompletedState
+}
+
+namespace com.sokoban.model.game.event {
+    class GameListener {
+        <<interface>>
+        +onEvent(GameEvent event)
+    }
+    class GameEvent {
+        -type : EventType
+        -position : Position
+        -direction : Direction
+    }
+    class EventType {
+        <<enumeration>>
+        PLAYER_MOVED
+        BOX_PUSHED
+        DOOR_OPENED
+        UNDO
+        LEVEL_WON
+        LEVEL_LOST
+    }
+}
+
+namespace com.sokoban.model.game.loss {
+    class LossCondition {
+        <<interface>>
+        +isMet(Level level) boolean
+        +getReason() LossReason
+    }
+    class BrokenBoxCondition
+    class WrongStorageCondition
+    class EarlyKeyStorageCondition
+    class TimeOutCondition
+    class DeadlockCondition
+    class LossReason {
+        <<enumeration>>
+        DEADLOCK
+        TIME_OUT
+        BROKEN_BOX
+        WRONG_STORAGE
+        EARLY_KEY_STORAGE
+    }
+}
+
+namespace com.sokoban.model.game.score {
+    class ScoreCalculator {
+        <<interface>>
+        +calculate(LevelStats stats, int remainingSeconds, int storedBoxes, int openedDoors, int targetScore) ScoreResult
+    }
+    class StandardScoreCalculator {
+        +calculate(LevelStats stats, int remainingSeconds, int storedBoxes, int openedDoors, int targetScore) ScoreResult
+    }
+    class ScoreResult {
+        -score : int
+        -stars : int
+    }
+}
+
+namespace com.sokoban.model.board {
+    class Board
+    class VisibilityMap
+}
+
+namespace com.sokoban.model.history {
+    class UndoHistory
+}
+
+Game "1" *-- "1" Level : currentLevel
+Game "1" o-- "1" GameState : state
+Game "1" o-- "0..*" GameListener : levelListeners
+Game --> IntFunction : levelFactory
+
+Level "1" *-- "1" Board
+Level "1" *-- "1" LevelStats
+Level "1" *-- "1" UndoHistory
+Level "1" *-- "1" VisibilityMap
+Level "1" o-- "5" LossCondition : evaluadas en orden
+Level "1" o-- "0..*" GameListener : publica
+Level ..> GameEvent : crea
+
+GameState <|.. MenuState
+GameState <|.. PlayingState
+GameState <|.. WonState
+GameState <|.. LostState
+GameState <|.. BlockedState
+GameState <|.. GameCompletedState
+GameState ..> Game : usa la API applyMove / applyUndo / loadLevel
+
+GameListener ..> GameEvent
+GameEvent --> EventType
+
+LossCondition <|.. BrokenBoxCondition
+LossCondition <|.. WrongStorageCondition
+LossCondition <|.. EarlyKeyStorageCondition
+LossCondition <|.. TimeOutCondition
+LossCondition <|.. DeadlockCondition
+LossCondition ..> Level : isMet
+LossCondition ..> LossReason
+
+ScoreCalculator <|.. StandardScoreCalculator
+ScoreCalculator ..> ScoreResult
+ScoreCalculator ..> LevelStats
+
+note for Game "Facade del modelo y Context del patron State. No tiene ningun if sobre el estado: delega en GameState y reemplaza el estado por el que le devuelven"
+note for GameState "State: los metodos onMove, onUndo y onNextLevel son default y devuelven this. PlayingState decide Won, Blocked o Lost; Blocked y Lost vuelven a Playing con undo; WonState carga el siguiente nivel o pasa a GameCompleted"
+note for Level "Originator del Memento y Subject del Observer. La victoria se chequea antes que la derrota"
+note for GameListener "Observer: la vista y los servicios se enteran de los cambios del modelo solo a traves de esta interfaz"
+note for LossCondition "Strategy: cada condicion de derrota es intercambiable. DeadlockCondition mira solo la caja recien empujada: esquina de paredes o bloque 2x2"
+note for ScoreCalculator "Strategy: StandardScoreCalculator suma 1 por segundo, 100 por caja y por muro, resta 1 por empuje y 250 por undo. Estrellas: hasta 50 por ciento una, hasta 85 dos, resto tres"

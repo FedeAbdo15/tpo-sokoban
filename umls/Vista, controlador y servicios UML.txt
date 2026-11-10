@@ -1,0 +1,174 @@
+classDiagram
+direction TB
+
+namespace com.sokoban {
+    class Main {
+        +main(String[] args)$
+    }
+}
+
+namespace com.sokoban.view {
+    class GameWindow {
+        -cards : CardLayout
+        -root : JPanel
+        -currentScreen : Screen
+        -menuView : MenuView
+        -summaryView : SummaryView
+        -boardView : BoardView
+        -hudView : HudView
+        -scoreCalculator : ScoreCalculator
+        +show(Screen screen)
+        +showLevel()
+        +refresh()
+        +showGameCompleted()
+    }
+    class Screen {
+        <<enumeration>>
+        MENU
+        GAME
+        SUMMARY
+    }
+    class MenuView
+    class SummaryView
+    class BoardView {
+        +fitToLevel()
+        #paintComponent(Graphics g)
+        +onEvent(GameEvent event)
+    }
+    class HudView {
+        +onEvent(GameEvent event)
+    }
+    class SpriteCatalog {
+        +SIZE : int$
+        -cache : Map~SpriteKey, BufferedImage~
+        +get(SpriteKey key) BufferedImage
+    }
+    class SpriteKey {
+        <<record>>
+        -name : String
+        -facing : Direction
+        +fileName() String
+    }
+}
+
+namespace com.sokoban.controller {
+    class InputController {
+        +install(JComponent component)
+        +bind(JComponent component, String key, Command command)
+    }
+    class HudController {
+        +actionPerformed(ActionEvent e)
+    }
+    class GameClock {
+        -timer : Timer
+        +start()
+        +stop()
+    }
+}
+
+namespace com.sokoban.service {
+    class FileProgressRepository {
+        +save(Progress progress)
+        +load() Progress
+    }
+    class SoundService {
+        -clips : Map~SoundEffect, Clip~
+        +play(SoundEffect effect)
+        +onEvent(GameEvent event)
+    }
+    class SoundEffect {
+        <<enumeration>>
+        MOVE
+        PUSH
+        STORE
+        BREAK
+        DOOR_OPEN
+        TELEPORT
+        UNDO
+        WIN
+        LOSE
+    }
+    class ProgressSaver {
+        +onEvent(GameEvent event)
+    }
+}
+
+namespace javax.swing {
+    class JFrame
+    class JPanel
+}
+
+namespace com.sokoban.model.game {
+    class Game
+}
+
+namespace com.sokoban.model.game.event {
+    class GameListener {
+        <<interface>>
+    }
+}
+
+namespace com.sokoban.model.game.score {
+    class ScoreCalculator {
+        <<interface>>
+    }
+}
+
+namespace com.sokoban.model.history {
+    class Command {
+        <<interface>>
+    }
+}
+
+namespace com.sokoban.port {
+    class ProgressRepository {
+        <<interface>>
+    }
+}
+
+namespace com.sokoban.factory {
+    class LevelLoader
+}
+
+JFrame <|-- GameWindow
+JPanel <|-- MenuView
+JPanel <|-- SummaryView
+JPanel <|-- BoardView
+JPanel <|-- HudView
+
+GameWindow "1" *-- "1" MenuView
+GameWindow "1" *-- "1" BoardView
+GameWindow "1" *-- "1" HudView
+GameWindow "1" *-- "1" SummaryView
+GameWindow --> Screen
+GameWindow --> ScoreCalculator
+
+BoardView --> SpriteCatalog
+SpriteCatalog "1" o-- "0..*" SpriteKey
+
+GameListener <|.. BoardView
+GameListener <|.. HudView
+GameListener <|.. SoundService
+GameListener <|.. ProgressSaver
+
+InputController --> Game
+InputController ..> Command : crea MoveCommand
+HudController --> Game : undo / restart
+GameClock --> Game : elapseSeconds(1)
+
+ProgressRepository <|.. FileProgressRepository
+ProgressSaver --> ProgressRepository
+ProgressSaver --> Game
+SoundService --> SoundEffect
+
+Main ..> Game
+Main ..> GameWindow
+Main ..> LevelLoader
+Main ..> SoundService
+Main ..> ProgressSaver
+Main ..> InputController
+Main ..> HudController
+Main ..> GameClock
+
+note for GameListener "MVC + DIP: ninguna clase de model, factory, port ni exception tiene flechas hacia view ni hacia javax.swing. La vista se entera de los cambios SOLO via GameListener y los controladores empujan acciones hacia Game"
+note for GameWindow "Facade de la vista: CardLay

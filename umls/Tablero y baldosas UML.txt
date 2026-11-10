@@ -1,0 +1,286 @@
+classDiagram
+direction TB
+
+namespace com.sokoban.model.board {
+    class Position {
+        <<record>>
+        -row : int
+        -col : int
+        +move(Direction d) Position
+    }
+    class Direction {
+        <<enumeration>>
+        UP
+        DOWN
+        LEFT
+        RIGHT
+        -rowOffset : int
+        -colOffset : int
+    }
+    class MoveResult {
+        <<enumeration>>
+        OK
+        BLOCKED
+        BROKEN
+    }
+    class MoveReport {
+        <<record>>
+        -result : MoveResult
+        -pushed : boolean
+        -outcome : LandingOutcome
+        -boxLanding : Position
+        +blocked() MoveReport$
+    }
+    class PushReport {
+        <<record>>
+        ~result : PushResult
+        ~outcome : LandingOutcome
+        ~landing : Position
+    }
+    class Cell {
+        -position : Position
+        -tile : Tile
+        -occupant : Occupant
+        +getTile() Tile
+        +setTile(Tile tile)
+        +getOccupant() Occupant
+        +isFree() boolean
+        +place(Occupant occupant)
+        +remove() Occupant
+    }
+    class Board {
+        -cells : Cell[][]
+        -playerPosition : Position
+        +cellAt(Position p) Cell
+        +isInside(Position p) boolean
+        +getTile(Position p) Tile
+        +admits(Position p, Occupant o) boolean
+        +getBoxAt(Position p) Box
+        +getCells() List~Cell~
+        +countStoredBoxes() int
+        +isComplete() boolean
+        +movePlayer(Direction d) MoveReport
+        -pushBox(Position p, Direction d) PushReport
+        -applyLanding(Cell cell, LandingOutcome outcome)
+        +setPlayerPosition(Position p)
+    }
+    class VisibilityMap {
+        -visible : Set~Position~
+        +isVisible(Position p) boolean
+        +recalculate(Board board)
+    }
+}
+
+namespace com.sokoban.model.tile {
+    class Tile {
+        <<abstract>>
+        +allowsPlayer() boolean
+        +allowsBox(Box box) boolean
+        +getEntryEffect() EntryEffect
+        +receiveBox(Box box) LandingOutcome
+        +isPendingStorage() boolean
+        +getStoredBox() Box
+        +setStoredBox(Box box)
+        +isTransparent() boolean
+        +getLinkedPosition() Position
+    }
+    class Floor
+    class Wall {
+        +isTransparent() boolean
+        +allowsPlayer() boolean
+        +allowsBox(Box box) boolean
+    }
+    class Empty {
+        +isTransparent() boolean
+        +allowsPlayer() boolean
+        +allowsBox(Box box) boolean
+    }
+    class Ice {
+        +getEntryEffect() EntryEffect
+    }
+    class Portal {
+        -letter : char
+        +linkTo(Position exit)
+        +getEntryEffect() EntryEffect
+        +getLinkedPosition() Position
+    }
+    class StoragePoint {
+        -type : BoxType
+        -storedBox : Box
+        +receive(Box box) StorageResult
+        +isFilled() boolean
+        +allowsPlayer() boolean
+        +allowsBox(Box box) boolean
+        +receiveBox(Box box) LandingOutcome
+    }
+    class StorageResult {
+        <<enumeration>>
+        STORED
+        WRONG_BOX
+        KEY_NOT_USED
+    }
+    class LandingOutcome {
+        <<enumeration>>
+        NONE
+        STORED
+        WRONG_STORAGE
+        KEY_NOT_USED
+        DOOR_OPENED
+    }
+}
+
+namespace com.sokoban.model.tile.effect {
+    class EntryEffect {
+        <<interface>>
+        +resolve(Board board, Occupant o, Position landing, Direction d) Position
+    }
+    class NoEffect {
+        +resolve(Board board, Occupant o, Position landing, Direction d) Position
+    }
+    class SlideEffect {
+        +resolve(Board board, Occupant o, Position landing, Direction d) Position
+    }
+    class TeleportEffect {
+        -exit : Position
+        +resolve(Board board, Occupant o, Position landing, Direction d) Position
+    }
+}
+
+namespace com.sokoban.model.tile.mechanism {
+    class Door {
+        -group : char
+        -open : boolean
+        +isOpen() boolean
+        +open()
+        +close()
+        +isTransparent() boolean
+        +allowsPlayer() boolean
+        +allowsBox(Box box) boolean
+    }
+    class KeyTile {
+        -group : char
+        -listeners : List~KeyTileListener~
+        +addListener(KeyTileListener l)
+        +receiveBox(Box box) LandingOutcome
+    }
+    class KeyTileListener {
+        <<interface>>
+        +onKeyTileActivated(char group)
+    }
+    class DoorGroup {
+        -group : char
+        -doors : List~Door~
+        +add(Door door)
+        +open()
+        +close()
+        +isOpen() boolean
+        +onKeyTileActivated(char group)
+    }
+}
+
+namespace com.sokoban.model.box {
+    class Occupant {
+        <<interface>>
+        +isPushable() boolean
+        +canEnter(Tile tile) boolean
+    }
+    class Player {
+        -facing : Direction
+        +getFacing() Direction
+        +face(Direction d)
+        +isPushable() boolean
+        +canEnter(Tile tile) boolean
+    }
+    class Box {
+        <<abstract>>
+        +getType() BoxType*
+        +canEnter(Tile tile) boolean
+        +push() PushResult
+        #onPushed() PushResult
+        +storeAt(StoragePoint sp) StorageResult
+        #onStored(StoragePoint sp) StorageResult
+        +opensDoors() boolean
+        +markDoorOpened()
+        +hasOpenedDoor() boolean
+        +setDoorOpened(boolean opened)
+        +getRemainingPushes() int
+        +setRemainingPushes(int n)
+    }
+    class NormalBox {
+        +getType() BoxType
+    }
+    class WeakBox {
+        -remainingPushes : int
+        +getType() BoxType
+        #onPushed() PushResult
+    }
+    class KeyBox {
+        -doorOpened : boolean
+        +getType() BoxType
+        +opensDoors() boolean
+        #onStored(StoragePoint sp) StorageResult
+    }
+    class BoxType {
+        <<enumeration>>
+        NORMAL
+        WEAK
+        KEY
+    }
+    class PushResult {
+        <<enumeration>>
+        PUSHED
+        BLOCKED
+        BROKEN
+    }
+}
+
+Position ..> Direction : move
+Board "1" *-- "1..*" Cell
+Cell "*" o-- "1" Tile
+Cell "1" o-- "0..1" Occupant
+Board ..> MoveReport
+Board ..> PushReport
+MoveReport --> MoveResult
+VisibilityMap ..> Board : recalculate
+
+Tile <|-- Floor
+Tile <|-- Wall
+Tile <|-- Empty
+Tile <|-- Ice
+Tile <|-- Portal
+Tile <|-- StoragePoint
+Tile <|-- Door
+Tile <|-- KeyTile
+Tile --> EntryEffect : getEntryEffect()
+Tile ..> LandingOutcome
+
+EntryEffect <|.. NoEffect
+EntryEffect <|.. SlideEffect
+EntryEffect <|.. TeleportEffect
+EntryEffect ..> Board : consulta admits
+
+KeyTile "1" o-- "0..*" KeyTileListener : notifica
+KeyTileListener <|.. DoorGroup
+DoorGroup "1" o-- "1..*" Door
+
+Occupant <|.. Player
+Occupant <|.. Box
+Box <|-- NormalBox
+Box <|-- WeakBox
+Box <|-- KeyBox
+Box --> BoxType
+Box ..> PushResult
+
+StoragePoint "1" o-- "0..1" Box : caja guardada
+StoragePoint ..> Box : receive
+Box ..> StoragePoint : storeAt
+StoragePoint ..> StorageResult
+
+note for Tile "Strategy (contexto): cada subclase redefine que admite, si es transparente y que efecto aplica al entrar"
+note for EntryEffect "Strategy: cada baldosa decide que le pasa a quien entra. NoEffect corta la recursion, SlideEffect delega en la celda siguiente, TeleportEffect devuelve la salida o null"
+note for StoragePoint "Una caja guardada deja de ser ocupante de la Cell y pasa a vivir dentro del StoragePoint. Por eso el jugador puede caminar encima (allowsPlayer = isFilled) e isComplete es polimorfico"
+note for KeyTile "Observer - Subject: al recibir una caja que abre puertas la marca, notifica y devuelve DOOR_OPENED"
+note for DoorGroup "Observer - Observer concreto: abre todas las puertas de su grupo"
+note for Box "Template Method: push y storeAt son finales y llaman a los hooks onPushed y onStored. WeakBox y KeyBox redefinen solo el hook que necesitan"
+note for Occupant "Double Dispatch: canEnter le pregunta a la baldosa lo que corresponde, asi Board nunca pregunta si es caja o jugador"
+note for VisibilityMap "BFS sobre baldosas transparentes; atraviesa portales via getLinkedPosition y marca paredes en diagonal"
