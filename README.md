@@ -22,7 +22,7 @@ ejercicio de aplicación de principios y patrones de diseño (**SOLID, GRASP, MV
 | Herramienta | Versión mínima | Cómo verificar |
 |---|---|---|
 | JDK | 21 | `java -version` |
-| Maven | 3.9 (o el wrapper incluido) | `mvn -version` |
+| Maven | 3.8 (o el wrapper incluido) | `mvn -version` |
 
 > No hace falta instalar Maven: el repositorio incluye el *Maven Wrapper*
 > (`mvnw` / `mvnw.cmd`). La interfaz usa **Swing**, que forma parte del JDK, así que
@@ -213,7 +213,14 @@ src/main/resources/
     └── audio/                # efectos de sonido (dominio público)
 
 src/test/java/                # suite JUnit 5
-docs/                         # consigna, informe técnico y diagrama de clases
+
+documentation/                # ENTREGABLES
+├── umls/                     # diagramas de clases (fuente Mermaid .txt + imagen .png)
+├── gameplay/                 # video del juego completo (Complete gameplay.mp4)
+└── Informe tecnico/          # informe técnico en PDF
+
+docs/                         # documentos de trabajo: informe en Markdown,
+                              # soluciones de los niveles, prompt del diagrama, plan
 ```
 
 ---
@@ -235,8 +242,35 @@ docs/                         # consigna, informe técnico y diagrama de clases
 | **Repository / DIP** | `port.ProgressRepository` ← `service.FileProgressRepository` | El modelo depende de la abstracción, no del archivo. |
 
 El detalle, con la justificación de cada decisión, está en el **informe técnico**
-(`docs/informe-tecnico.pdf`) y en el **diagrama de clases** (`docs/diagrama-clases.mdj`,
-StarUML).
+(PDF en `documentation/Informe tecnico/`; fuente en `docs/informe-tecnico.md`) y en los
+**diagramas de clases** de `documentation/umls/`.
+
+---
+
+## Documentación y entregables
+
+### Diagramas de clases
+
+El diagrama está dividido en cuatro vistas. Cada una tiene su fuente en Mermaid (`.txt`)
+y la imagen renderizada (`.png`), en `documentation/umls/`:
+
+| Vista | Fuente | Imagen |
+|---|---|---|
+| Tablero y baldosas | `Tablero y baldosas UML.txt` | `Tablero y baldosas UML.png` |
+| Ciclo de juego y estados | `Ciclo de juegos y estados UML.txt` | `Ciclo de juegos y estados.png` |
+| Historial, carga y niveles | `Historial de cargas y niveles UML.txt` | `Historial de cargas y niveles.png` |
+| Vista, controlador y servicios | `Vista, controlador y servicios UML.txt` | `Vista, controlador y servicios UML.png` |
+
+### Video de gameplay
+
+`documentation/gameplay/Complete gameplay.mp4` muestra los 5 niveles jugados de
+principio a fin.
+
+### Informe técnico
+
+`documentation/Informe tecnico/Informe tecnico - Sokoban.pdf`, con los diagramas de
+clases como anexo. Su fuente editable es
+`docs/informe-tecnico.md`.
 
 ---
 

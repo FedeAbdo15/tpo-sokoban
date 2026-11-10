@@ -1,18 +1,49 @@
 # Sokoban — Análisis de estado, patrones y plan de trabajo
 
-> Documento de trabajo interno (no es entregable). Fecha: 2026-11-06.
+> Documento de trabajo interno (no es entregable). Creado: 2026-11-06.
+> Última actualización: 2026-11-10.
 > Consigna de referencia: `docs/PDS - TI - Prof Pepe.pdf`.
 
 ---
 
-# 1. Análisis del estado de la carpeta
+# 0. Estado actual (2026-11-10) — TP completo
+
+**El TP está terminado.** Juego, tests, documentación y entregables están en el
+repositorio público `https://github.com/FedeAbdo15/tpo-sokoban`.
+
+```
+./mvnw clean package   ->   Tests run: 108,  Failures: 0,  Errors: 0,  Skipped: 0   ->  BUILD SUCCESS
+```
+
+| Entregable | Ubicación | Estado |
+|---|---|---|
+| Código fuente (Java 21 + Swing) | `src/main/java/com/sokoban/` (89 clases) | ✅ |
+| Suite de tests JUnit 5 | `src/test/java/` (108 tests, 22 clases) | ✅ |
+| 5 niveles | `src/main/resources/levels/` | ✅ |
+| Sprites y sonidos CC0 | `src/main/resources/assets/` (21 PNG + 9 WAV) | ✅ |
+| README con instrucciones | `README.md` | ✅ |
+| Diagramas de clases (4 vistas, Mermaid + PNG) | `documentation/umls/` | ✅ |
+| Video de gameplay | `documentation/gameplay/Complete gameplay.mp4` | ✅ |
+| Informe técnico (PDF) | `documentation/Informe tecnico/Informe tecnico - Sokoban.pdf` (fuente: `docs/informe-tecnico.md`) | ✅ |
+| Repositorio público de GitHub | `origin/main` | ✅ |
+
+Pendientes opcionales (no bloquean la entrega): M15 (`LevelSource`) y la parte que
+falta de M17 (sacar el reloj de `Level`). Ver sección 3.
+
+> Las secciones 1 a 7 son el **registro histórico** del análisis y del plan, tal como se
+> escribieron durante el desarrollo. Los estados ✅/❌ de las tablas de la sección 1 son
+> los del 2026-11-06, antes de implementar; el estado vigente es el de esta sección.
+
+---
+
+# 1. Análisis del estado de la carpeta (histórico, 2026-11-06)
 
 ## 1.1 Resumen ejecutivo
 
-El proyecto es un **esqueleto arquitectónico muy bien pensado pero mayormente sin
-implementar**. La estructura de paquetes, la jerarquía de clases y —sobre todo— la
-suite de tests son excelentes: los tests funcionan como especificación ejecutable de
-todo el TP. Lo que falta es el relleno.
+Al arrancar, el proyecto era un **esqueleto arquitectónico muy bien pensado pero
+mayormente sin implementar**. La estructura de paquetes, la jerarquía de clases y —sobre
+todo— la suite de tests eran excelentes: los tests funcionaron como especificación
+ejecutable de todo el TP.
 
 **Baseline inicial** (`./mvnw test`, 2026-11-06, antes de tocar nada):
 
@@ -50,24 +81,27 @@ con las soluciones de `docs/soluciones-niveles.md` y verifica que el juego llegu
 target/sokoban-1.0.jar` abre el menú, se juegan los 5 niveles con flechas, hay HUD,
 botones, sonido, niebla de guerra, resumen con puntaje y progreso persistente.
 
-**El modelo esta terminado.** No queda ni un `UnsupportedOperationException` en
-`src/main`, y `./mvnw clean package` pasa con la suite entera en verde.
-Lo unico vacio son las clases de `view/`, `controller/` y `service/` del sonido,
-que son la Fase 3.
+**Baseline final** (2026-11-10, con el test de `Game.addLevelListener`):
+
+```
+Tests run: 108,  Failures: 0,  Errors: 0,  Skipped: 0   ->  BUILD SUCCESS
+```
+
+No queda ni un `UnsupportedOperationException` ni un `TODO` en `src/main`.
 
 ## 1.2 Métricas
 
-| Métrica | Valor |
-|---|---|
-| Clases de producción | 90 archivos `.java` |
-| Líneas de producción | 1.358 |
-| Líneas de test | 1.793 |
-| Clases completamente vacías (stub de 4 líneas) | **28** |
-| Métodos con `throw new UnsupportedOperationException("TODO")` | 26 |
-| Niveles `.txt` en `src/main/resources/levels/` | ~~**0**~~ → **5** ✅ (M2) |
-| Sprites / sonidos | **0** (solo `.gitkeep`) |
+| Métrica | Al inicio (2026-11-06) | Final (2026-11-10) |
+|---|---|---|
+| Clases de producción | 90 archivos `.java` | 89 |
+| Líneas de producción | 1.358 | ~3.760 |
+| Líneas de test | 1.793 | ~2.100 |
+| Clases completamente vacías (stub de 4 líneas) | **28** | 0 |
+| Métodos con `throw new UnsupportedOperationException("TODO")` | 26 | 0 |
+| Niveles `.txt` en `src/main/resources/levels/` | 0 | 5 |
+| Sprites / sonidos | 0 (solo `.gitkeep`) | 21 PNG / 9 WAV |
 
-## 1.3 Bloqueante #1 — El proyecto está en JavaFX, la consigna pide Swing
+## 1.3 ✅ RESUELTO (M1) — Bloqueante #1: el proyecto estaba en JavaFX, la consigna pide Swing
 
 Es el hallazgo más grave y el más fácil de pasar por alto.
 
@@ -90,7 +124,7 @@ borrarlo entero**. No hay una sola línea de UI propia escrita todavía, así qu
 de la migración es cero en términos de código perdido: es solo cambiar el `pom.xml`,
 borrar 4 archivos y escribir la UI en Swing desde el principio.
 
-## 1.4 Qué está completo y funcionando (38 tests en verde)
+## 1.4 Qué estaba completo al inicio (38 tests en verde)
 
 | Área | Archivo | Estado |
 |---|---|---|
@@ -105,7 +139,7 @@ borrar 4 archivos y escribir la UI en Swing desde el principio.
 | Estados (clases) | `model/game/state/*` | ✅ las 6 clases existen |
 | Excepción de nivel | `exception/InvalidLevelException.java` | ✅ completo |
 
-## 1.5 Qué falta — inventario completo
+## 1.5 Qué faltaba — inventario al inicio (todo resuelto, ver sección 0)
 
 ### A. Clases totalmente vacías (28)
 
@@ -143,13 +177,13 @@ vacío. Todo el sistema de efectos de baldosa está vacío.**
 
 ### D. Entregables documentales faltantes
 
-| Entregable | Estado |
-|---|---|
-| Repositorio público de GitHub | ⚠️ la carpeta **no es un repo git** todavía (`git init` pendiente) |
-| README con instrucciones | ✅ generado en esta sesión |
-| Video gameplay | ❌ pendiente (requiere el juego andando) |
-| Diagrama de clases en StarUML | ❌ pendiente (ver sección 7) |
-| Informe técnico | ❌ pendiente |
+| Entregable | Estado al inicio | Estado final |
+|---|---|---|
+| Repositorio público de GitHub | ⚠️ no era un repo git | ✅ `FedeAbdo15/tpo-sokoban` |
+| README con instrucciones | ✅ generado | ✅ alineado con la estructura final |
+| Video gameplay | ❌ pendiente | ✅ `documentation/gameplay/Complete gameplay.mp4` |
+| Diagrama de clases | ❌ pendiente | ✅ 4 vistas en Mermaid + PNG en `documentation/umls/` (no StarUML) |
+| Informe técnico | ❌ pendiente | ✅ PDF en `documentation/Informe tecnico/`, fuente en `docs/informe-tecnico.md` |
 
 ## 1.6 Hallazgos de diseño que hay que decidir antes de implementar
 
@@ -232,17 +266,17 @@ una sola vez. `LevelBuilder.wireDoorGroups()` arma los grupos y suscribe cada ca
 del grupo. Y la caja nunca se castea: `Box.opensDoors()` y `Box.markDoorOpened()` son
 hooks con implementación vacía en la clase base que solo `KeyBox` redefine.
 
-### 🟡 H5 — `GameEvent` no transporta datos
+### ✅ H5 — RESUELTO (M13): `GameEvent` no transportaba datos
 
-`GameEvent` solo tiene un `EventType`. La vista no puede animar el movimiento ni el
-`SoundService` elegir el sonido correcto sin saber *qué* caja, *dónde* y *en qué
-dirección*. Hay que enriquecerlo.
+`GameEvent` solo tenía un `EventType`. Se enriqueció con `Position` y `Direction`, que es
+lo que necesitan la vista y el `SoundService`.
 
-### 🟡 H6 — `Game` recibe `IntFunction<Level>`, que no puede lanzar excepción
+### 🟡 H6 — `Game` recibe `IntFunction<Level>`, que no puede lanzar excepción (no se cambió)
 
 `LevelLoader.load()` lanza `InvalidLevelException` (checked), pero `IntFunction` no
-declara excepciones. El adaptador va a tener que envolverla en una no-checked, o hay
-que definir una interfaz propia `LevelSource { Level load(int n) throws ... }`.
+declara excepciones. Se resolvió envolviéndola en una no-checked en el adaptador. La
+interfaz propia `LevelSource { Level load(int n) throws ... }` (M15) quedó como mejora
+opcional y **no se implementó**.
 
 ### 🟢 H7 — Varios detalles menores
 
@@ -312,7 +346,7 @@ Leyenda de estado: ✅ implementado · 🟡 estructura presente, lógica faltant
 | | | `DeadlockCondition`, `TimeOutCondition`, `BrokenBoxCondition`, `WrongStorageCondition`, `EarlyKeyStorageCondition` | *ConcreteStrategy* ×5, evaluadas en orden por `Level` | ✅ |
 | 10 | **Strategy** (c) efecto de baldosa | `model/tile/effect/EntryEffect.java` | *Strategy*, aplicado por `Board` vía `Tile.getEntryEffect()` | ✅ |
 | | | `NoEffect`, `SlideEffect`, `TeleportEffect` | *ConcreteStrategy* ×3. `SlideEffect` no itera: delega en el efecto de la celda siguiente y `NoEffect` corta la recursión | ✅ |
-| 11 | **Flyweight** | `view/SpriteCatalog.java`, `view/SpriteKey.java` | *FlyweightFactory* + clave | ❌ vacías |
+| 11 | **Flyweight** | `view/SpriteCatalog.java`, `view/SpriteKey.java` | *FlyweightFactory* + clave | ✅ |
 | 12 | **Facade** | `model/game/Game.java` | única fachada del modelo hacia el controlador | ✅ |
 | 13 | **Repository + Adapter** | `port/ProgressRepository.java` (interfaz), `port/Progress.java` | *puerto* | ✅ |
 | | | `service/FileProgressRepository.java` | *adaptador* a archivo | ✅ |
@@ -335,7 +369,7 @@ Leyenda de estado: ✅ implementado · 🟡 estructura presente, lógica faltant
 | **Protected Variations** | `CellCreator`, `LossCondition`, `EntryEffect`, `ScoreCalculator` | Puntos de variación aislados tras interfaces. |
 | **Low Coupling** | Paquetes `model` / `view` / `controller` / `port` | El modelo no importa nada de UI. |
 | **High Cohesion** | Un paquete por concepto (`board`, `box`, `tile`, `history`, `loss`, `score`, `state`) | — |
-| **Controller** | `controller/InputController`, `controller/HudController` | ❌ vacíos todavía. |
+| **Controller** | `controller/InputController`, `controller/HudController` | Traducen teclado y botones a llamadas a la fachada `Game`. |
 
 ## 2.3 Principios SOLID
 
@@ -351,12 +385,12 @@ Leyenda de estado: ✅ implementado · 🟡 estructura presente, lógica faltant
 
 | Capa | Paquete | Estado |
 |---|---|---|
-| Modelo | `model/`, `factory/`, `port/` | 🟡 parcial, pero **sin ninguna dependencia de UI** ✅ |
-| Vista | `view/` | ❌ 8 clases vacías |
-| Controlador | `controller/` | ❌ 3 clases vacías |
+| Modelo | `model/`, `factory/`, `port/` | ✅ completo y **sin ninguna dependencia de UI** |
+| Vista | `view/` | ✅ 8 clases Swing |
+| Controlador | `controller/` | ✅ 3 clases |
 
 El modelo está correctamente aislado: no hay un solo `import javafx.*` ni `javax.swing.*`
-dentro de `model/`. Eso es lo que hace que la migración a Swing sea barata.
+dentro de `model/`. Eso es lo que hizo barata la migración a Swing.
 
 ---
 
@@ -380,10 +414,11 @@ Priorizadas. 🔴 bloqueante · 🟠 necesaria para aprobar · 🟡 mejora la no
 | ~~M12~~ | ✅ | **HECHO. 21 sprites PNG y 9 efectos WAV**, generados programáticamente: obra propia del equipo, CC0. Documentados en `assets/CREDITS.md`, con instrucciones para reemplazarlos por arte de terceros si se quiere. | `resources/assets/` |
 | ~~M13~~ | ✅ | **HECHO. Enriquecer `GameEvent`** con `Position` y `Direction`. Ver H5. | `event/GameEvent.java` |
 | ~~M14~~ | ✅ | **HECHO. Dar comportamiento real a los `GameState`**: `onMove`, `onUndo`, `onNextLevel` con default methods. `Game` no tiene un solo `if` sobre el estado. | `state/*`, `Game.java` |
-| M15 | 🟡 | **Reemplazar `IntFunction<Level>` por una interfaz propia `LevelSource`** que declare `InvalidLevelException`. Ver H6. | `Game.java`, `port/LevelSource.java` |
+| M15 | 🟡 | **Opcional, no implementado.** Reemplazar `IntFunction<Level>` por una interfaz propia `LevelSource` que declare `InvalidLevelException`. Ver H6. | `Game.java`, `port/LevelSource.java` |
 | ~~M16~~ | ✅ | **HECHO. Mover todos los paquetes bajo `com.sokoban.*`** y renombrar `Void` → `Empty`. | todo el árbol |
 | M17 | 🟡 | **Parcial. Extraer de `Level`** las responsabilidades de tiempo y de visibilidad a colaboradores (`LevelTimer`, el `VisibilityMap` como listener). Evita la God class. Ver H7g. | `Level.java` |
-| M18 | 🟡 | **`git init` + repositorio público en GitHub.** La carpeta no está versionada. | — |
+| ~~M18~~ | ✅ | **HECHO. Repositorio público en GitHub**: `https://github.com/FedeAbdo15/tpo-sokoban`. | — |
+| ~~M19~~ | ✅ | **HECHO. Entregables en `documentation/`**: `umls/` (4 diagramas Mermaid + PNG), `gameplay/` (video) e `Informe tecnico/` (PDF del informe). README alineado con esa estructura. | `documentation/`, `README.md` |
 
 ---
 
@@ -391,10 +426,10 @@ Priorizadas. 🔴 bloqueante · 🟠 necesaria para aprobar · 🟡 mejora la no
 
 Generado en la raíz del repositorio: `README.md`.
 
-> ⚠️ Está escrito contra el **estado final** del TP (Swing, 5 niveles, artefacto
-> `sokoban-1.0.jar`). Antes de entregar hay que verificar que los comandos de la
-> sección «Cómo ejecutar» coincidan con el `pom.xml` final, y completar los datos
-> del integrante y el nombre del equipo.
+✅ Verificado contra el estado final: los comandos de «Cómo ejecutar» coinciden con el
+`pom.xml` (`target/sokoban-1.0.jar`), los datos del integrante están completos y la
+sección «Documentación y entregables» apunta a `documentation/umls/`,
+`documentation/gameplay/` y `documentation/Informe tecnico/`.
 
 ---
 
@@ -583,7 +618,7 @@ Cada uno introduce un mecanismo:
 > el portal de salida y lo bloquea, así que el jugador no puede seguirla. Por eso ningún
 > nivel exige teletransportar una caja hacia una zona que esté sellada de otro modo.
 
-**Meta de la fase:** `./mvnw test` → **101/101 en verde**.
+**Meta de la fase:** `./mvnw test` todo en verde → ✅ cumplida: **108/108**.
 
 ---
 
@@ -710,13 +745,21 @@ diferencias.
 > exige poder defender cada decisión, y un diagrama que no coincide con el código es
 > peor que no tenerlo.
 
+✅ **Resultado:** el diagrama quedó dividido en 4 vistas, en
+`documentation/umls/` (fuente Mermaid `.txt` + imagen `.png`):
+
+- Tablero y baldosas
+- Ciclo de juego y estados
+- Historial, carga y niveles
+- Vista, controlador y servicios
+
 # Resumen de prioridades
 
-| Orden | Qué | Por qué |
-|---|---|---|
-| 1 | Migrar a Swing (Paso 0.1) | La consigna lo exige textualmente. Hoy no se cumple. |
-| 2 | Reubicar paquetes (Paso 0.2) | Es gratis ahora y caro después. |
-| 3 | Corregir `UndoTest` (Paso 0.3) | El test contradice la consigna. |
-| 4 | Fases 1 y 2 (Pasos 1–10) | Llevan el modelo a 101/101 tests en verde. |
-| 5 | Niveles + UI Swing + assets | Lo que el profesor ve correr en el video. |
-| 6 | Diagrama + informe técnico + `git init` + repo público | Entregables formales. |
+| Orden | Qué | Por qué | Estado |
+|---|---|---|---|
+| 1 | Migrar a Swing (Paso 0.1) | La consigna lo exige textualmente. | ✅ |
+| 2 | Reubicar paquetes (Paso 0.2) | Es gratis al principio y caro después. | ✅ |
+| 3 | Corregir `UndoTest` (Paso 0.3) | El test contradecía la consigna. | ✅ |
+| 4 | Fases 1 y 2 (Pasos 1–10) | Completan el modelo con todos los tests en verde. | ✅ (paso 9 parcial) |
+| 5 | Niveles + UI Swing + assets | Lo que el profesor ve correr en el video. | ✅ |
+| 6 | Diagrama + video + informe técnico + repo público | Entregables formales, en `documentation/`. | ✅ |

@@ -1,7 +1,7 @@
 # Informe Técnico — Sokoban
 
-> **Trabajo Integrador** — Proceso de Desarrollo de Software (PDS)
-> **Docente:** Prof. Jonathan Pepe — Fundación UADE
+> **Trabajo Integrador** — Proceso de Desarrollo de Software (PDS)<br>
+> **Docente:** Prof. Jonathan Pepe — Fundación UADE<br>
 > **Fecha de entrega:** Noviembre 2026
 
 ---
@@ -31,6 +31,7 @@
 11. [Decisiones de diseño relevantes](#11-decisiones-de-diseño-relevantes)
 12. [Uso de herramientas de IA](#12-uso-de-herramientas-de-ia)
 13. [Conclusiones](#13-conclusiones)
+14. [Anexo — Diagramas de clases](#anexo--diagramas-de-clases)
 
 ---
 
@@ -709,3 +710,25 @@ El resultado es un juego completo y jugable, con 108 tests en verde, 5 niveles c
 - Larman, C. (2004). *Applying UML and Patterns: An Introduction to Object-Oriented Analysis and Design and Iterative Development* (3ra ed.). Prentice Hall.
 - Martin, R. C. (2002). *Agile Software Development: Principles, Patterns, and Practices*. Prentice Hall.
 - Fowler, M. (2002). *Patterns of Enterprise Application Architecture*. Addison-Wesley.
+
+---
+
+## Anexo — Diagramas de clases
+
+El diagrama de clases está dividido en cuatro vistas. La fuente de cada una (Mermaid) y su imagen están en `documentation/umls/`.
+
+### A.1 Tablero y baldosas
+
+![Tablero y baldosas](<../documentation/umls/Tablero y baldosas UML.png>)
+
+### A.2 Ciclo de juego y estados
+
+![Ciclo de juego y estados](<../documentation/umls/Ciclo de juegos y estados.png>)
+
+### A.3 Historial, carga y niveles
+
+![Historial, carga y niveles](<../documentation/umls/Historial de cargas y niveles.png>)
+
+### A.4 Vista, controlador y servicios
+
+![Vista, controlador y servicios](<../documentation/umls/Vista, controlador y servicios UML.png>)
