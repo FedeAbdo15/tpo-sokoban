@@ -3,7 +3,7 @@ package com.sokoban.view;
 import com.sokoban.model.board.Direction;
 
 /**
- * Clave inmutable de un sprite. Es la clave del Flyweight {@link SpriteCatalog}.
+ * Clave inmutable de un sprite. Es la clave del cache de {@link SpriteCatalog}.
  *
  * @param name   nombre base del archivo, sin extension
  * @param facing direccion, solo para el Sokoban; null para el resto

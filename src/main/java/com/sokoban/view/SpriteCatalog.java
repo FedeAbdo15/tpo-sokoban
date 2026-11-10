@@ -10,8 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Flyweight: cada imagen se lee del disco una sola vez y se comparte entre todas las
- * celdas que la usan. Un nivel de 9x13 dibuja 117 celdas por cuadro con 21 imagenes.
+ * Catalogo de sprites (Pure Fabrication, GRASP): cada imagen se lee del disco una sola
+ * vez y se comparte entre todas las celdas que la usan. Un nivel de 9x13 dibuja 117
+ * celdas por cuadro con 21 imagenes.
  *
  * <p>Si falta un archivo devuelve un cuadrado de aviso en lugar de romper el dibujado,
  * asi se ve enseguida que sprite falta.

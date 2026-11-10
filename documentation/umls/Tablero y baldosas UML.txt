@@ -282,5 +282,5 @@ note for StoragePoint "Una caja guardada deja de ser ocupante de la Cell y pasa 
 note for KeyTile "Observer - Subject: al recibir una caja que abre puertas la marca, notifica y devuelve DOOR_OPENED"
 note for DoorGroup "Observer - Observer concreto: abre todas las puertas de su grupo"
 note for Box "Template Method: push y storeAt son finales y llaman a los hooks onPushed y onStored. WeakBox y KeyBox redefinen solo el hook que necesitan"
-note for Occupant "Double Dispatch: canEnter le pregunta a la baldosa lo que corresponde, asi Board nunca pregunta si es caja o jugador"
+note for Occupant "Polimorfismo (GRASP): canEnter le pregunta a la baldosa lo que corresponde, asi Board nunca pregunta si es caja o jugador"
 note for VisibilityMap "BFS sobre baldosas transparentes; atraviesa portales via getLinkedPosition y marca paredes en diagonal"

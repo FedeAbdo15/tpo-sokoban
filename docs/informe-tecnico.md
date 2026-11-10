@@ -321,7 +321,7 @@ public void onKeyTileActivated(char activatedGroup) {
 | *ConcreteStrategy* ×3 | `NoEffect` (devuelve la posición tal cual), `SlideEffect` (hielo: avanza recursivamente), `TeleportEffect` (portal: posición de la salida) |
 | *Context* | `Board` — aplica `tile.getEntryEffect().resolve(...)` tras cada entrada |
 
-Cada baldosa expone su efecto con `getEntryEffect()`. El hielo devuelve un `SlideEffect` compartido; el piso devuelve un `NoEffect` singleton. El `SlideEffect` delega en el efecto de la celda siguiente en lugar de iterar: si esa celda es hielo sigue deslizando, si es piso el `NoEffect` corta la recursión.
+Cada baldosa expone su efecto con `getEntryEffect()`. El hielo devuelve un `SlideEffect` compartido; el piso devuelve una única instancia compartida de `NoEffect`. El `SlideEffect` delega en el efecto de la celda siguiente en lugar de iterar: si esa celda es hielo sigue deslizando, si es piso el `NoEffect` corta la recursión.
 
 Decisión de diseño: el efecto es **del terreno**, no de la caja. Por eso vive en `Tile` y no en `Box`: si se agrega un nuevo terreno (lava, cintas transportadoras), se implementa un nuevo `EntryEffect` sin tocar la jerarquía de cajas.
 
@@ -409,25 +409,7 @@ Se usa `InputMap`/`ActionMap` en lugar de `KeyListener` para no depender de qué
 
 ---
 
-### 4.9 Flyweight (Estructural)
-
-> *«Usa el compartimiento para permitir un gran número de objetos de grano fino de forma eficiente.»*
-> — Gamma et al., p. 195.
-
-**Solución:**
-
-| Rol GoF | Clase |
-|---|---|
-| *FlyweightFactory* | `SpriteCatalog` — `Map<SpriteKey, BufferedImage>`, carga cada PNG **una sola vez** |
-| *Clave* | `SpriteKey` — record inmutable `(name, direction)` |
-
-El `BoardView` dibuja hasta 9×13 = 117 celdas en cada repintado. Sin Flyweight, cada celda cargaría su imagen del disco; con él, todas las celdas de piso (o pared, etc.) comparten la misma referencia al bitmap en memoria.
-
-El mismo principio se aplica en `SoundService`, que precarga los 9 archivos WAV como instancias de `Clip` indexadas por `SoundEffect`.
-
----
-
-### 4.10 Facade / Fachada (Estructural)
+### 4.9 Facade / Fachada (Estructural)
 
 > *«Proporciona una interfaz unificada para un conjunto de interfaces de un subsistema.»*
 > — Gamma et al., p. 185.
@@ -439,38 +421,23 @@ El mismo principio se aplica en `SoundService`, que precarga los 9 archivos WAV 
 
 ---
 
-### 4.11 Repository / Adapter (Estructural + DIP)
+### 4.10 Adapter (Estructural)
+
+> *«Convierte la interfaz de una clase en otra interfaz que es la que esperan los clientes.»*
+> — Gamma et al., p. 139.
+
+**Problema:** el juego necesita guardar el progreso del jugador entre sesiones, pero el modelo no debería depender del sistema de archivos ni de `java.nio`.
 
 **Solución:**
 
-| Rol | Clase |
+| Rol GoF | Clase |
 |---|---|
-| *Puerto* (interfaz) | `ProgressRepository` — `save(Progress)`, `load(): Progress` |
-| *Adaptador* | `FileProgressRepository` — lee y escribe un archivo de texto simple |
-| *Modelo de dominio* | `Progress` — record con `lastUnlockedLevel` |
+| *Target* (la interfaz que espera el cliente) | `ProgressRepository` — `save(Progress)`, `load(): Progress` |
+| *Adapter* | `FileProgressRepository` — implementa `ProgressRepository` traduciendo cada llamada a lecturas y escrituras de un archivo de texto |
+| *Adaptee* | La API de archivos de Java (`java.nio.file.Files`) |
+| *Client* | `ProgressSaver` y el menú, que solo conocen `ProgressRepository` |
 
-El modelo depende de la abstracción `ProgressRepository`; la implementación concreta en disco vive en la capa de servicios. Esto es Arquitectura Hexagonal / Puertos y Adaptadores.
-
----
-
-### 4.12 Doble Despacho (Double Dispatch)
-
-**Problema:** el tablero necesita saber si un ocupante puede entrar a una baldosa, pero la regla depende de **ambos**: el tipo de ocupante y el tipo de baldosa. El jugador pregunta si puede pisar; la caja pregunta si puede ser empujada ahí.
-
-**Solución:**
-
-```java
-// Occupant.java — interfaz
-boolean canEnter(Tile tile);
-
-// Player.java — le pregunta a la baldosa lo que le corresponde
-public boolean canEnter(Tile tile) { return tile.allowsPlayer(); }
-
-// Box.java — le pregunta a la baldosa lo que le corresponde
-public boolean canEnter(Tile tile) { return tile.allowsBox(this); }
-```
-
-El tablero llama `occupant.canEnter(tile)` sin un solo `instanceof`. Es el ocupante quien le pregunta a la baldosa según su rol.
+El modelo depende de la abstracción `ProgressRepository` (principio de inversión de dependencias, ver 6.5); la implementación concreta en disco vive en la capa de servicios. Cambiar el archivo por otra forma de guardado es escribir otro adaptador, sin tocar el modelo.
 
 ---
 
@@ -485,10 +452,33 @@ Los patrones GRASP (Craig Larman, *Applying UML and Patterns*, 2004) se aplican 
 | **Controller** | `InputController`, `HudController` | Reciben los eventos del sistema (Swing) y delegan en la fachada `Game`. |
 | **Low Coupling** | Paquetes `model` / `view` / `controller` / `port` | El modelo no importa nada de UI. La vista no modifica el modelo. |
 | **High Cohesion** | Un paquete por concepto | `board`, `box`, `tile`, `history`, `loss`, `score`, `state` — cada uno tiene una sola razón de cambio. |
-| **Polymorphism** | Jerarquía de `Tile` (8 subclases) y `Box` (3 subclases) | No hay un solo `switch` sobre tipo de baldosa ni de caja en el motor de juego. |
-| **Pure Fabrication** | `LevelLoader`, `UndoHistory`, `SoundService`, `GameClock`, `FileProgressRepository`, `ScoreCalculator` | Clases que no representan conceptos del dominio real del Sokoban, creadas para bajar acoplamiento y subir cohesión. |
+| **Polymorphism** | Jerarquía de `Tile` (8 subclases) y `Box` (3 subclases); `Occupant.canEnter(Tile)` | No hay un solo `switch` sobre tipo de baldosa ni de caja en el motor de juego (ver 5.1). |
+| **Pure Fabrication** | `LevelLoader`, `UndoHistory`, `SoundService`, `GameClock`, `FileProgressRepository`, `ScoreCalculator`, `SpriteCatalog` | Clases que no representan conceptos del dominio real del Sokoban, creadas para bajar acoplamiento y subir cohesión. |
 | **Indirection** | `DoorGroup`, `ProgressRepository`, `LevelLoader.creators` | Objetos intermediarios que evitan el acoplamiento directo. `KeyTile` y `Door` no se conocen entre sí: se hablan a través del grupo. |
 | **Protected Variations** | `CellCreator`, `LossCondition`, `EntryEffect`, `ScoreCalculator`, `ProgressRepository` | Puntos de variación aislados detrás de interfaces. |
+
+### 5.1 Polymorphism: quién puede entrar a una baldosa
+
+**Problema:** el tablero necesita saber si un ocupante puede entrar a una baldosa, pero la regla depende de **ambos**: el tipo de ocupante y el tipo de baldosa. El jugador pregunta si puede pisar; la caja pregunta si puede ser empujada ahí.
+
+**Solución:** en lugar de que `Board` pregunte «¿sos caja o jugador?», cada ocupante resuelve su caso por polimorfismo y le hace a la baldosa la pregunta que le corresponde:
+
+```java
+// Occupant.java — interfaz
+boolean canEnter(Tile tile);
+
+// Player.java
+public boolean canEnter(Tile tile) { return tile.allowsPlayer(); }
+
+// Box.java
+public boolean canEnter(Tile tile) { return tile.allowsBox(this); }
+```
+
+El tablero llama `occupant.canEnter(tile)` sin un solo `instanceof`. La primera llamada se resuelve según el tipo de ocupante y la segunda según el tipo de baldosa, así que agregar una baldosa nueva solo implica redefinir `allowsPlayer()` y `allowsBox()`.
+
+### 5.2 Pure Fabrication: el catálogo de sprites
+
+`SpriteCatalog` no representa nada del dominio del Sokoban: es una clase de la vista creada para que `BoardView` no cargue imágenes. Guarda un `Map<SpriteKey, BufferedImage>` y lee cada PNG del disco **una sola vez**, la primera vez que se pide. El `BoardView` dibuja hasta 9×13 = 117 celdas en cada repintado, y todas las celdas de piso (o pared, etc.) reciben la misma imagen ya cargada. `SoundService` aplica el mismo criterio con los 9 efectos WAV, precargados como `Clip` indexados por `SoundEffect`.
 
 ---
 
@@ -589,7 +579,7 @@ JFrame
 
 ### 8.4 Sonido
 
-`SoundService` usa `javax.sound.sampled.Clip` (no JavaFX). Es `GameListener`: mapea cada `EventType` a un `SoundEffect`. Cada `Clip` se precarga una vez (Flyweight). Los archivos son WAV PCM 16-bit, que es lo que `javax.sound.sampled` soporta nativamente.
+`SoundService` usa `javax.sound.sampled.Clip` (no JavaFX). Es `GameListener`: mapea cada `EventType` a un `SoundEffect`. Cada `Clip` se precarga una vez y se reutiliza. Los archivos son WAV PCM 16-bit, que es lo que `javax.sound.sampled` soporta nativamente.
 
 ### 8.5 Assets
 
@@ -643,7 +633,7 @@ El proyecto incluye **108 tests JUnit 5** organizados en 21 clases de prueba:
 | Niveles jugables | 5 |
 | Sprites PNG | 21 (48×48 px) |
 | Efectos de sonido WAV | 9 |
-| Patrones GoF aplicados | 12 (Factory Method, Builder, Template Method, State, Observer ×2, Strategy ×3, Memento, Command, Flyweight, Facade) |
+| Patrones GoF aplicados | 10 (Factory Method, Builder, Template Method, State, Observer ×2, Strategy ×3, Memento, Command, Facade, Adapter) |
 | Versión de Java | 21 |
 | Framework gráfico | Swing (`javax.swing.*`) |
 | Build system | Maven 3 (wrapper incluido) |
@@ -691,7 +681,7 @@ El alcance concreto: las herramientas de IA asistieron en la escritura y refacto
 
 ## 13. Conclusiones
 
-El proyecto Sokoban demuestra la aplicación práctica de **12 patrones GoF**, **9 patrones GRASP** y los **5 principios SOLID** en un sistema de complejidad real. Cada patrón responde a un problema concreto del dominio:
+El proyecto Sokoban demuestra la aplicación práctica de **10 patrones GoF**, **9 patrones GRASP** y los **5 principios SOLID** en un sistema de complejidad real. Cada patrón responde a un problema concreto del dominio:
 
 1. **State** elimina la lógica condicional dispersa sobre las fases del juego.
 2. **Memento** resuelve la imposibilidad matemática de deshacer movimientos con efectos encadenados.

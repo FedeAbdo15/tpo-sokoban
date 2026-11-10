@@ -190,10 +190,10 @@ DoorGroup implements KeyTileListener   -- OBSERVER
   + add(Door) ; + open() ; + close() ; + isOpen(): boolean
 
 --------------------------------------------------------------- com.sokoban.model.box
-                                             [TEMPLATE METHOD + DOUBLE DISPATCH]
+                                             [TEMPLATE METHOD + POLIMORFISMO (GRASP)]
 <<interface>> Occupant
   + isPushable(): boolean
-  + canEnter(Tile): boolean   -- DOUBLE DISPATCH: cada ocupante le pregunta a la
+  + canEnter(Tile): boolean   -- POLIMORFISMO (GRASP): cada ocupante le pregunta a la
                                  baldosa lo que le corresponde, así Board nunca
                                  pregunta "¿sos caja o jugador?"
 
@@ -380,7 +380,7 @@ BoardView extends JPanel implements GameListener
      acá, no en Tile
 HudView extends JPanel implements GameListener
   -- nivel, movimientos, empujes, tiempo, undos + botones Deshacer y Reiniciar
-SpriteCatalog   -- FLYWEIGHT: cache Map<SpriteKey, BufferedImage>; SIZE = 48
+SpriteCatalog   -- PURE FABRICATION (GRASP): cache Map<SpriteKey, BufferedImage>; SIZE = 48
 <<record>> SpriteKey(name: String, facing: Direction) : + fileName(): String
 
 --------------------------------------------------------------- com.sokoban.controller
@@ -585,7 +585,7 @@ classDiagram
 
     note for EntryEffect "Strategy: cada baldosa decide que le pasa a quien entra"
     note for Box "Template Method: push() y storeAt() son finales y llaman a los hooks"
-    note for Occupant "Double dispatch: el ocupante le pregunta a la baldosa"
+    note for Occupant "Polimorfismo (GRASP): el ocupante le pregunta a la baldosa"
     note for StoragePoint "Al guardar, la caja sale de la Cell y queda dentro del destino"
 ```
 
@@ -617,7 +617,7 @@ las diferencias con el código que efectivamente quedó:
 | Qué | Antes (previsto) | Ahora (real) |
 |---|---|---|
 | `MoveReport`, `PushReport`, `LandingOutcome` | no existían | `Board` informa qué pasó en cada movimiento |
-| `Occupant.canEnter(Tile)` | no estaba | doble despacho, para que `Board` no pregunte por el tipo |
+| `Occupant.canEnter(Tile)` | no estaba | polimorfismo (GRASP), para que `Board` no pregunte por el tipo |
 | `EntryEffect.resolve(...)` | `(Board, Position, Direction)` | lleva también el `Occupant` |
 | `Tile` | `allowsPlayer`, `allowsBox` | suma `receiveBox`, `isPendingStorage`, `getStoredBox`, `setStoredBox`, `isTransparent`, `getLinkedPosition` |
 | `StoragePoint` | guardaba contra `allowsPlayer(Cell)` | **se queda con la caja**; no hizo falta cambiar ninguna firma |

@@ -237,9 +237,8 @@ docs/                         # documentos de trabajo: informe en Markdown,
 | **State** | `model.game.state.GameState` y subclases | Menú / jugando / ganado / perdido / bloqueado / juego completo. |
 | **Observer** | `GameListener`, `GameEvent` | La vista, el sonido y la visibilidad reaccionan sin acoplarse al modelo. |
 | **Command + Memento** | `MoveCommand`, `LevelMemento`, `UndoHistory` | Historial acotado para deshacer. |
-| **Flyweight** | `view.SpriteCatalog` | Cada sprite se carga una sola vez y se comparte. |
 | **Facade** | `model.game.Game` | Única puerta de entrada del controlador al modelo. |
-| **Repository / DIP** | `port.ProgressRepository` ← `service.FileProgressRepository` | El modelo depende de la abstracción, no del archivo. |
+| **Adapter** | `port.ProgressRepository` ← `service.FileProgressRepository` | Adapta la API de archivos a la interfaz que espera el modelo (DIP). |
 
 El detalle, con la justificación de cada decisión, está en el **informe técnico**
 (PDF en `documentation/Informe tecnico/`; fuente en `docs/informe-tecnico.md`) y en los

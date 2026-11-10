@@ -15,8 +15,8 @@ import java.util.Map;
  * Reproduce un efecto por cada evento del juego.
  *
  * <p>Es un {@link GameListener}: el modelo no sabe que existe el sonido, solo publica
- * lo que paso. Los clips se precargan una vez y se comparten, con el mismo criterio
- * Flyweight que los sprites.
+ * lo que paso. Los clips se precargan una vez y se reutilizan, igual que los sprites
+ * en {@link com.sokoban.view.SpriteCatalog}.
  *
  * <p>Si la maquina no tiene placa de sonido disponible, el juego sigue funcionando
  * en silencio en lugar de romperse.

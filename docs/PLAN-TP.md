@@ -27,6 +27,20 @@ repositorio público `https://github.com/FedeAbdo15/tpo-sokoban`.
 | Informe técnico (PDF) | `documentation/Informe tecnico/Informe tecnico - Sokoban.pdf` (fuente: `docs/informe-tecnico.md`) | ✅ |
 | Repositorio público de GitHub | `origin/main` | ✅ |
 
+**Alineación con la teoría de la materia (2026-11-10).** Solo se presentan como
+patrones GoF los dados en clase: Singleton, Factory Method, Abstract Factory, Builder,
+Prototype, Adapter, Decorator, Facade, Composite, Bridge, Strategy, Observer, Command,
+Memento, State, Mediator y Template Method. Por eso:
+
+| Antes | Ahora | Dónde se cambió |
+|---|---|---|
+| Flyweight (`SpriteCatalog`) | *Pure Fabrication* (GRASP); el código no cambió, solo cómo se lo presenta | informe 4.9 → 5.2, README, javadoc, este plan |
+| Repository / Adapter | **Adapter** (roles Target / Adapter / Adaptee / Client) | informe 4.10, README, este plan |
+| Doble despacho (`Occupant.canEnter`) | *Polymorphism* (GRASP) | informe 4.12 → 5.1, javadoc, nota del UML «Tablero y baldosas» |
+
+Quedan 10 patrones GoF, todos de la lista: Factory Method, Builder, Template Method,
+State, Observer, Strategy, Memento, Command, Facade y Adapter.
+
 Pendientes opcionales (no bloquean la entrega): M15 (`LevelSource`) y la parte que
 falta de M17 (sacar el reloj de `Level`). Ver sección 3.
 
@@ -346,12 +360,12 @@ Leyenda de estado: ✅ implementado · 🟡 estructura presente, lógica faltant
 | | | `DeadlockCondition`, `TimeOutCondition`, `BrokenBoxCondition`, `WrongStorageCondition`, `EarlyKeyStorageCondition` | *ConcreteStrategy* ×5, evaluadas en orden por `Level` | ✅ |
 | 10 | **Strategy** (c) efecto de baldosa | `model/tile/effect/EntryEffect.java` | *Strategy*, aplicado por `Board` vía `Tile.getEntryEffect()` | ✅ |
 | | | `NoEffect`, `SlideEffect`, `TeleportEffect` | *ConcreteStrategy* ×3. `SlideEffect` no itera: delega en el efecto de la celda siguiente y `NoEffect` corta la recursión | ✅ |
-| 11 | **Flyweight** | `view/SpriteCatalog.java`, `view/SpriteKey.java` | *FlyweightFactory* + clave | ✅ |
+| 11 | ~~**Flyweight**~~ | — | **Retirado (2026-11-10):** no está entre los patrones dados en la materia. `SpriteCatalog` se presenta como *Pure Fabrication* (GRASP). | — |
 | 12 | **Facade** | `model/game/Game.java` | única fachada del modelo hacia el controlador | ✅ |
-| 13 | **Repository + Adapter** | `port/ProgressRepository.java` (interfaz), `port/Progress.java` | *puerto* | ✅ |
-| | | `service/FileProgressRepository.java` | *adaptador* a archivo | ✅ |
-| 14 | **Polimorfismo de baldosas** | `model/tile/Tile.java` + 8 subclases | `allowsPlayer()`, `allowsBox()`, `getEntryEffect()`, `receiveBox()`, `isPendingStorage()` polimórficos | ✅ |
-| 15 | **Double Dispatch** | `model/box/Occupant.canEnter(Tile)` ← `Player` / `Box` | Evita que `Board` pregunte «¿sos caja o jugador?»: el ocupante le pregunta a la baldosa lo que le corresponde | ✅ |
+| 13 | **Adapter** | `port/ProgressRepository.java` (interfaz), `port/Progress.java` | *Target* | ✅ |
+| | | `service/FileProgressRepository.java` | *Adapter* sobre la API de archivos (*Adaptee*: `java.nio.file.Files`) | ✅ |
+| 14 | *(GRASP, no GoF)* Polimorfismo de baldosas | `model/tile/Tile.java` + 8 subclases | `allowsPlayer()`, `allowsBox()`, `getEntryEffect()`, `receiveBox()`, `isPendingStorage()` polimórficos. Ver 2.2 *Polymorphism* | ✅ |
+| 15 | *(GRASP, no GoF)* ~~Double Dispatch~~ → Polimorfismo | `model/box/Occupant.canEnter(Tile)` ← `Player` / `Box` | Evita que `Board` pregunte «¿sos caja o jugador?». **Renombrado (2026-11-10):** «doble despacho» no es un patrón de la materia; se presenta como *Polymorphism* (GRASP) | ✅ |
 
 ## 2.2 Patrones GRASP
 
@@ -588,7 +602,7 @@ Quedó a medias y a propósito:
   `UndoHistory`, las derrotas en la lista de `LossCondition` y el recorrido en
   `VisibilityMap`. No arma ninguna de esas cosas por su cuenta.
 
-**Paso 10 — ✅ HECHO. Persistencia.** *Patrones: Repository, Adapter, DIP.*
+**Paso 10 — ✅ HECHO. Persistencia.** *Patrones: Adapter, DIP.*
 `FileProgressRepository` escribe un `nivel=N` en un archivo de texto; si no existe,
 `load()` devuelve `new Progress(1)`.
 - ✅ *Verde:* `ProgressRepositoryTest` (2).
@@ -649,7 +663,7 @@ javax.swing.JFrame
 | `view/HudView` | `JPanel` con los `JLabel` de movimientos/empujes/nivel/tiempo y los `JButton` de deshacer y reiniciar. **Es `GameListener`** | Observer |
 | `view/SummaryView` | Movimientos, empujes, undos usados, puntaje y estrellas | — |
 | `view/SpriteKey` | Clave inmutable del sprite (`record SpriteKey(String name, Direction facing)`) | — |
-| `view/SpriteCatalog` | `Map<SpriteKey, BufferedImage>` — carga cada PNG **una sola vez** y lo comparte | **Flyweight** |
+| `view/SpriteCatalog` | `Map<SpriteKey, BufferedImage>` — carga cada PNG **una sola vez** y lo comparte | Pure Fabrication (GRASP) |
 
 ## 6.2 Controladores
 
@@ -686,7 +700,7 @@ Es `GameListener`: mapea `EventType` → `SoundEffect`.
 public enum SoundEffect { MOVE, PUSH, STORE, BREAK, DOOR_OPEN, TELEPORT, WIN, LOSE, UNDO }
 ```
 
-Cada `Clip` se precarga una vez (mismo criterio Flyweight que los sprites). WAV PCM
+Cada `Clip` se precarga una vez (mismo criterio que los sprites). WAV PCM
 16-bit, que es lo que `javax.sound.sampled` soporta nativamente — **no usar MP3**.
 
 ## 6.5 Orden de implementación de la UI

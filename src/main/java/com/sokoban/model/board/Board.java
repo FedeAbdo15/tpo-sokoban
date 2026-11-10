@@ -17,7 +17,7 @@ import java.util.List;
  *
  * <p>No sabe de tipos concretos de baldosa ni de caja: delega en {@code Tile}
  * (que deja entrar, que efecto aplica, que provoca una caja al caer) y en
- * {@code Occupant} (doble despacho para saber si puede entrar).
+ * {@code Occupant} (por polimorfismo, para saber si puede entrar).
  */
 public class Board {
     private final Cell[][] cells;
